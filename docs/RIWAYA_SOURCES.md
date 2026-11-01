@@ -17,25 +17,25 @@ LNReader plugin index (`plugins/v3.0.0/.dist/plugins.min.json`, 328 plugins, 20 
 | 7 | جنة الروايات (NovelParadise) | `ireader.novelparadise.ar` | novelsparadise.site | 2.7 |
 | 8 | روايات فانز (Rewayatfans) | `ireader.rewayatfans.ar` | rewayatfans.com | 2.3 |
 | 9 | رواية فانز (Rewayahfans) | `ireader.rewayahfans.ar` | rewayahfans.net | 2.5 |
-| 10 | Rewayat Club | `ireader.rewayatclub.ar` | rewayat.club | 2.3 |
-| 11 | Riwyat | `ireader.riwyat.ar` | cenele.com | 2.12 |
-| 12 | Sunovels | `ireader.sunovels.ar` | sunovels.com | 2.3 |
-| 13 | RealmNovel | `ireader.realmnovel.ar` | (from the extension) | 2.5 |
-| 14 | AzoraFly | `ireader.azorafly.ar` | azorafly.com | 2.1 |
-| 15 | Golden Rest (dilar tube) | `ireader.golden.ar` | golden.rest | 2.3 |
-| 16 | Armtl | `ireader.armtl.ar` | (from the extension) | 2.2 |
-| 17 | ArNovel | `ireader.arnovel.ar` | ar-no.com | 2.5 |
-| 18 | HizoManga (novels only) | `ireader.hizomanga.ar` | hizomanga.net | 2.5 |
-| 19 | Novel4Up | `ireader.novel4up.ar` | novel4up.com | 1.2 |
-| 20 | NovelArab | `ireader.novelarab.ar` | (from the extension) | 2.1 |
+| 10 | نادي الروايات (Rewayat Club) | `ireader.rewayatclub.ar` | rewayat.club | 2.3 |
+| 11 | روايات (Riwyat) | `ireader.riwyat.ar` | cenele.com | 2.12 |
+| 12 | صن نوفلز (Sunovels) | `ireader.sunovels.ar` | sunovels.com | 2.3 |
+| 13 | عالم الروايات (RealmNovel) | `ireader.realmnovel.ar` | (from the extension) | 2.5 |
+| 14 | أزورا فلاي (AzoraFly) | `ireader.azorafly.ar` | azorafly.com | 2.1 |
+| 15 | الاستراحة الذهبية (Golden Rest) | `ireader.golden.ar` | golden.rest | 2.3 |
+| 16 | الترجمة الآلية العربية (Armtl) | `ireader.armtl.ar` | (from the extension) | 2.2 |
+| 17 | الرواية العربية (ArNovel) | `ireader.arnovel.ar` | ar-no.com | 2.5 |
+| 18 | هيزو (HizoManga, novels only) | `ireader.hizomanga.ar` | hizomanga.net | 2.5 |
+| 19 | روايات فور أب (Novel4Up) | `ireader.novel4up.ar` | novel4up.com | 1.2 |
+| 20 | روايات العرب (NovelArab) | `ireader.novelarab.ar` | (from the extension) | 2.1 |
 
 ## B. Arabic sites with only an LNReader plugin (new IReader-format sources to write in `riwaya-sources/`)
 
 | Name | Site | Status |
 |---|---|---|
-| Free Kol Novel | https://free.kolnovel.com/ | to check in Phase 4 |
-| Azora (moon) | https://azoramoon.com/ | to check in Phase 4 |
-| Olaoe | https://olaoe.cyou/ | to check in Phase 4 |
+| ملوك الروايات المجاني (Free Kol Novel) | https://free.kolnovel.com/ | built into the app |
+| أزورا مون (Azora) | https://azoramoon.com/ | skipped: marked down in LNReader |
+| أولاو (Olaoe) | https://olaoe.cyou/ | skipped: marked down in LNReader since January 2026 |
 
 Before a site is written: open it; if it is down, sits behind a protection the app may not pass, or clearly hosts
 pirated paid content, skip it and log why in `RIWAYA_DECISIONS.md`.
