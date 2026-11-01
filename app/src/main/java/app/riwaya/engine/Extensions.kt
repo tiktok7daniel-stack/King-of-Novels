@@ -101,10 +101,14 @@ class Extensions(
 
     fun sources(): List<CatalogSource> = _installed.value.map { it.source }
 
-    /** Installed sources the reader has not switched off. */
+    /**
+     * The sources in use: in the reader's languages, not switched off by the reader, and not switched off by the app
+     * because they do not work.
+     */
     fun enabled(): List<NovelExt> {
-        val off = settings.disabledSources.get()
-        return _installed.value.filter { it.source.id.toString() !in off }
+        val off = settings.disabledSources.get() + settings.autoDisabled.get()
+        val langs = settings.languages.get() + "multi"
+        return _installed.value.filter { it.source.id.toString() !in off && it.lang in langs }
     }
 
     fun source(id: Long): CatalogSource? = _installed.value.firstOrNull { it.source.id == id }?.source

@@ -34,7 +34,14 @@ import java.util.concurrent.ConcurrentHashMap
 enum class Engine { AI, GOOGLE, MLKIT }
 
 /** How far a chapter's translation is: each paragraph is filled in as its batch comes back. */
-data class TranslationProgress(val paragraphs: List<String?>, val done: Int, val total: Int, val engine: Engine? = null) {
+data class TranslationProgress(
+    val paragraphs: List<String?>,
+    val done: Int,
+    val total: Int,
+    val engine: Engine? = null,
+    val failed: Int = 0,
+    val error: String? = null,
+) {
     val finished: Boolean get() = done >= total
 }
 
@@ -128,19 +135,26 @@ class Translator(private val context: Context, private val settings: Settings) {
         val batches = batches(paragraphs.indices.toList(), paragraphs, if (ai) AI_BATCH_CHARS else MT_BATCH_CHARS)
         val gate = Semaphore(settings.parallelBatches.get().coerceIn(1, 6))
         var engineUsed: Engine? = null
+        var failed = 0
+        var lastError: String? = if (chain.isEmpty()) "No translation engine is on" else null
         val lock = Mutex()
         coroutineScope {
             batches.map { idx ->
                 launch(Dispatchers.IO) {
                     gate.withPermit {
                         val texts = idx.map { paragraphs[it] }
-                        val (out, engine) = translateBatch(texts, title, sourceLang, glossary, chain)
+                        val (out, engine, error) = translateBatch(texts, title, sourceLang, glossary, chain)
                         lock.withLock {
                             idx.forEachIndexed { i, p -> result[p] = out[i] }
-                            if (engineUsed == null || engine == Engine.AI) engineUsed = engine
+                            if (engine == null) {
+                                failed += idx.size
+                                lastError = error ?: lastError
+                            } else if (engineUsed == null || engine == Engine.AI) {
+                                engineUsed = engine
+                            }
                             if (firstAt == 0L) firstAt = System.currentTimeMillis() - start
                             val done = result.count { it != null }
-                            state.value = TranslationProgress(result.toList(), done, paragraphs.size, engineUsed)
+                            state.value = TranslationProgress(result.toList(), done, paragraphs.size, engineUsed, failed, lastError)
                             send(state.value)
                         }
                     }
@@ -149,7 +163,8 @@ class Translator(private val context: Context, private val settings: Settings) {
         }
         val final = result.mapIndexed { i, s -> s ?: paragraphs[i] }
         _lastTiming.value = firstAt to (System.currentTimeMillis() - start)
-        if (final.indices.any { final[it] != paragraphs[it] }) {
+        // Kept only when every paragraph came back translated, so a failed chapter is tried again next time
+        if (failed == 0 && final.indices.any { final[it] != paragraphs[it] }) {
             withContext(Dispatchers.IO) {
                 runCatching {
                     cacheFile(novelId, chapterKey, target()).writeAtomic(
@@ -159,7 +174,7 @@ class Translator(private val context: Context, private val settings: Settings) {
             }
         }
         writeGlossary(novelId, glossary)
-        send(TranslationProgress(final, final.size, final.size, engineUsed))
+        send(TranslationProgress(final, final.size, final.size, engineUsed, failed, lastError))
     }
 
     /** The whole chapter, for prefetching and listening. */
@@ -175,8 +190,9 @@ class Translator(private val context: Context, private val settings: Settings) {
         sourceLang: String,
         glossary: MutableMap<String, String>,
         chain: List<Engine>,
-    ): Pair<List<String>, Engine?> {
+    ): Triple<List<String>, Engine?, String?> {
         val target = target()
+        var error: String? = null
         for (engine in chain) {
             if (engine in resting) continue
             try {
@@ -196,17 +212,41 @@ class Translator(private val context: Context, private val settings: Settings) {
                     }
                     Engine.MLKIT -> MlKit.translate(texts, sourceLang.ifBlank { "en" }, target)
                 }
-                if (out != null && out.size == texts.size) return out.map { it.trim() } to engine
+                if (out != null && out.size == texts.size) return Triple(out.map { it.trim() }, engine, null)
+                error = "$engine: no answer"
             } catch (e: CancellationException) {
                 throw e
             } catch (e: EngineOut) {
                 Log.w(TAG, "$engine resting for this session: ${e.message}")
+                error = "$engine: ${e.message}"
                 resting += engine
             } catch (e: Exception) {
                 Log.w(TAG, "$engine batch failed", e)
+                error = "$engine: ${e.message ?: e.javaClass.simpleName}"
             }
         }
-        return texts to null
+        return Triple(texts, null, error)
+    }
+
+    /** Translates one short sentence with each engine, for the check in Settings: engine to its answer or error. */
+    suspend fun test(sample: String): List<Pair<Engine, String>> {
+        resting.clear()
+        val out = mutableListOf<Pair<Engine, String>>()
+        for (e in chain("en")) {
+            val r = try {
+                when (e) {
+                    Engine.AI -> Gemini.translate(settings.geminiKey.get(), settings.geminiModel.get(), languageName(target()), "Test", listOf(sample), emptyMap())?.paragraphs?.firstOrNull() ?: "no answer"
+                    Engine.GOOGLE -> GoogleFree.translate(sample, target())
+                    Engine.MLKIT -> MlKit.translate(listOf(sample), "en", target()).first()
+                }
+            } catch (ex: CancellationException) {
+                throw ex
+            } catch (ex: Exception) {
+                "ERROR: " + (ex.message ?: ex.javaClass.simpleName)
+            }
+            out += e to r
+        }
+        return out
     }
 
     /** Names the glossary knows are put in already translated, so a plain engine keeps them the same everywhere. */
@@ -265,7 +305,7 @@ class Translator(private val context: Context, private val settings: Settings) {
     companion object {
         private const val TAG = "RiwayaTr"
         private const val AI_BATCH_CHARS = 3_200
-        private const val MT_BATCH_CHARS = 1_800
+        private const val MT_BATCH_CHARS = 1_500
 
         /** Paragraph indexes grouped so each batch stays small enough to come back whole, order kept. */
         fun batches(indexes: List<Int>, paragraphs: List<String>, maxChars: Int): List<List<Int>> {

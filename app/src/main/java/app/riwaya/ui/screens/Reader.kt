@@ -160,7 +160,10 @@ class ReaderModel(val route: Route.Reader) : ScreenModel() {
     fun translate(force: Boolean = false) {
         val text = original.value ?: return
         val ch = chapters.value.getOrNull(index.value) ?: return
-        if (force) Riwaya.translator.forget(novelId, ch.key)
+        if (force) {
+            Riwaya.translator.forget(novelId, ch.key)
+            Riwaya.translator.resetSession()
+        }
         translateJob?.cancel()
         translateJob = scope.launch {
             Riwaya.translator.translate(novelId, novel.title, ch.key, text, novel.lang).collect { translation.value = it }
@@ -335,6 +338,25 @@ fun ReaderScreen(route: Route.Reader) {
                         modifier = Modifier.fillMaxWidth().height(2.dp), color = Color(0xFF3DD6C6), trackColor = pc.mute.copy(alpha = 0.2f),
                     )
                 }
+                if (needs && tr != null && tr.finished && tr.failed > 0 && mode != "ORIGINAL") {
+                    Row(
+                        Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFFF5D5D).copy(alpha = 0.12f)).padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                if (tr.failed >= tr.total) stringResource(R.string.translation_failed_all) else stringResource(R.string.translation_failed_some, tr.failed),
+                                color = pc.text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                            )
+                            tr.error?.let { Text(it, color = pc.mute, fontSize = 10.5.sp, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+                        }
+                        Text(
+                            stringResource(R.string.retry), color = Color(0xFFE5603E), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { m.translate(force = true) }.padding(8.dp),
+                        )
+                    }
+                }
                 if (needs && mode != "ORIGINAL") {
                     Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, pc.mute.copy(alpha = 0.25f), RoundedCornerShape(12.dp)).padding(3.dp)) {
                         listOf("TRANSLATED" to R.string.mode_translated, "BILINGUAL" to R.string.mode_bilingual, "ORIGINAL" to R.string.mode_original).forEach { (k, label) ->
@@ -359,7 +381,9 @@ fun ReaderScreen(route: Route.Reader) {
                 Text(stringResource(R.string.reader_left, ((at + 1) * 100 / total), (wordsLeft / 200).coerceAtLeast(1)), color = pc.mute, fontSize = 11.sp, modifier = Modifier.weight(1f))
                 if (needs && tr != null) {
                     Text(
-                        if (tr.finished) engineLabel(tr.engine) else stringResource(R.string.translating_progress, tr.done, tr.total),
+                        if (!tr.finished) stringResource(R.string.translating_progress, tr.done, tr.total)
+                        else if (tr.failed >= tr.total) stringResource(R.string.not_translated)
+                        else engineLabel(tr.engine),
                         color = pc.mute, fontSize = 11.sp,
                     )
                 }

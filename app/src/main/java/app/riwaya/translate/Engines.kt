@@ -8,6 +8,7 @@ import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.TranslatorOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -32,32 +33,151 @@ import kotlin.coroutines.resumeWithException
 /** An engine that cannot be used for the rest of this session (no key, quota used up, refused). */
 class EngineOut(message: String) : IOException(message)
 
-/** Google Translate's free web endpoint: no key, fast, the first answer for most readers. */
+/** Google said "too many requests" (or sent its "unusual traffic" page): it gets a short rest. */
+class GoogleBusy(val code: Int) : IOException("Google busy ($code)")
+
+/**
+ * Google Translate's free web addresses, no key: the one MANHWA uses (translate.google.com with its token) first,
+ * then two others when one is refused. A refused address is asked again on the next one at once; when all of them
+ * refuse, Google rests for half a minute and the next engine takes the text. At most 4 requests run at once.
+ */
 object GoogleFree {
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+    private val gate = kotlinx.coroutines.sync.Semaphore(4)
+    @Volatile private var restUntil = 0L
+    @Volatile private var preferred = 0
+    @Volatile var lastError: String? = null
+        private set
 
-    suspend fun translate(text: String, target: String, source: String = "auto"): String = withContext(Dispatchers.IO) {
-        if (text.isBlank()) return@withContext text
-        val body = FormBody.Builder().add("q", text).build()
-        val req = Request.Builder()
-            .url("https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=$source&tl=$target&ie=UTF-8&oe=UTF-8")
-            .post(body)
-            .build()
-        Net.client.newCall(req).execute().use { r ->
-            if (r.code == 429 || r.code == 403) throw EngineOut("Google ${r.code}")
-            if (!r.isSuccessful) throw IOException("Google HTTP ${r.code}")
-            val root = json.parseToJsonElement(r.body.string()).jsonArray
-            val segments = root.firstOrNull() as? JsonArray ?: return@use text
-            segments.joinToString("") { seg -> ((seg as? JsonArray)?.firstOrNull() as? JsonPrimitive)?.contentOrNull.orEmpty() }
+    // Redirects are not followed: Google's "unusual traffic" page comes as a redirect and means "too many"
+    private val client by lazy { Net.client.newBuilder().followRedirects(false).followSslRedirects(false).build() }
+
+    private enum class Endpoint { WEB, APIS, DICT }
+
+    fun resting(): Boolean = System.currentTimeMillis() < restUntil
+
+    suspend fun translate(text: String, target: String, source: String = "auto"): String {
+        if (text.isBlank()) return text
+        if (resting()) throw GoogleBusy(429)
+        return gate.withPermit {
+            var last: Throwable? = null
+            val all = Endpoint.entries
+            for (attempt in 0 until all.size + 1) {
+                val i = (preferred + attempt) % all.size
+                try {
+                    val out = withContext(Dispatchers.IO) { request(all[i], text, target, source) }
+                    preferred = i
+                    lastError = null
+                    return@withPermit out
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    last = e
+                    lastError = e.message
+                    // A network error is worth one short wait; a refusal goes straight to the next address
+                    if (e !is GoogleBusy) kotlinx.coroutines.delay(400L * (attempt + 1))
+                }
+            }
+            if (last is GoogleBusy) restUntil = System.currentTimeMillis() + 30_000
+            throw last ?: IOException("Google did not answer")
         }
     }
+
+    private fun request(endpoint: Endpoint, text: String, target: String, source: String): String {
+        val q = java.net.URLEncoder.encode(text, "UTF-8")
+        val url = when (endpoint) {
+            Endpoint.WEB -> "https://translate.google.com/translate_a/single?client=gtx&sl=$source&tl=$target&dt=t&ie=UTF-8&oe=UTF-8&otf=1&ssel=0&tsel=0&kc=1&tk=${token(text)}"
+            Endpoint.APIS -> "https://translate.googleapis.com/translate_a/single?client=gtx&sl=$source&tl=$target&dt=t&ie=UTF-8&oe=UTF-8"
+            Endpoint.DICT -> "https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=$source&tl=$target"
+        }
+        // Short texts go in the address (as MANHWA sends them); long ones in the body
+        val req = if (q.length < 5_000) {
+            Request.Builder().url("$url&q=$q").get().build()
+        } else {
+            Request.Builder().url(url).post(FormBody.Builder().add("q", text).build()).build()
+        }
+        client.newCall(req).execute().use { r ->
+            if (r.code == 429 || r.code == 403 || r.code in 300..399) throw GoogleBusy(r.code)
+            if (!r.isSuccessful) throw IOException("Google HTTP ${r.code}")
+            val body = r.body.string()
+            if (body.trimStart().startsWith("<")) throw GoogleBusy(429)
+            return parse(endpoint, body) ?: throw IOException("Google answer not understood")
+        }
+    }
+
+    private fun parse(endpoint: Endpoint, body: String): String? = runCatching {
+        val root = json.parseToJsonElement(body).jsonArray
+        when (endpoint) {
+            Endpoint.DICT -> {
+                // ["text"] or [["text","en"]]
+                val first = root.firstOrNull()
+                ((first as? JsonArray)?.firstOrNull() ?: first)?.let { (it as? JsonPrimitive)?.contentOrNull }
+            }
+            else -> {
+                val segments = root.firstOrNull() as? JsonArray ?: return@runCatching null
+                buildString {
+                    for (seg in segments) {
+                        val p = (seg as? JsonArray)?.firstOrNull() as? JsonPrimitive ?: continue
+                        if (p.isString) append(p.content)
+                    }
+                }
+            }
+        }
+    }.getOrNull()?.takeIf { it.isNotBlank() }
 
     /** Several paragraphs in one call, split back by line; null when the lines do not come back one for one. */
     suspend fun translateLines(lines: List<String>, target: String, source: String = "auto"): List<String>? {
         val joined = lines.joinToString("\n") { it.replace('\n', ' ') }
         val out = translate(joined, target, source).split('\n').map { it.trim() }.filter { it.isNotEmpty() }
         return out.takeIf { it.size == lines.size }
+    }
+
+    /** The token translate.google.com expects with a text (the same one MANHWA sends). */
+    private fun token(str: String): String {
+        val list = mutableListOf<Int>()
+        var i = 0
+        while (i < str.length) {
+            val c = str.codePointAt(i)
+            when {
+                c < 128 -> list.add(c)
+                c < 2048 -> {
+                    list.add((c shr 6) or 192)
+                    list.add((c and 63) or 128)
+                }
+                c >= 65536 -> {
+                    list.add((c shr 18) or 240)
+                    list.add(((c shr 12) and 63) or 128)
+                    list.add(((c shr 6) and 63) or 128)
+                    list.add((c and 63) or 128)
+                    i++
+                }
+                else -> {
+                    list.add((c shr 12) or 224)
+                    list.add(((c shr 6) and 63) or 128)
+                    list.add((c and 63) or 128)
+                }
+            }
+            i++
+        }
+        var j = 406644L
+        for (n in list) j = rl(j + n.toLong(), "+-a^+6")
+        var r = rl(j, "+-3^+b+-f") xor 3293161072L
+        if (r < 0) r = (r and 2147483647L) + 2147483648L
+        val j2 = r % 1000000L
+        return "$j2.${406644L xor j2}"
+    }
+
+    private fun rl(j: Long, s: String): Long {
+        var result = j
+        var i = 0
+        while (i < s.length - 2) {
+            val shift = if (s[i + 2] in 'a'..'z') s[i + 2].code - 'W'.code else s[i + 2].digitToInt()
+            val v = if (s[i + 1] == '+') result ushr shift else result shl shift
+            result = if (s[i] == '+') (result + v) and 4294967295L else result xor v
+            i += 3
+        }
+        return result
     }
 }
 

@@ -36,7 +36,7 @@ class Settings(context: Context) {
 
     // First run
     val onboarded = bool("onboarded", false)
-    val languages = set("languages", setOf("ar"))
+    val languages = set("languages", setOf("ar", "en"))
     val genres = set("genres", emptySet())
 
     // Sources
@@ -45,6 +45,13 @@ class Settings(context: Context) {
     val disabledSources = set("disabled_sources", emptySet())
     val pinnedSources = set("pinned_sources", emptySet())
     val showNsfw = bool("show_nsfw", false)
+    /** Sources switched off by the app because their check failed; switched back on when they work again. */
+    val autoDisabled = set("auto_disabled", emptySet())
+    /** Sources the reader keeps on even when their check fails. */
+    val keepOn = set("keep_on", emptySet())
+    val autoHideBroken = bool("auto_hide_broken", true)
+    val lastHealthRun = str("last_health_run", "0")
+    val englishAdded = bool("english_added", false)
 
     // Translation
     val targetLanguage = str("target_language", "ar")

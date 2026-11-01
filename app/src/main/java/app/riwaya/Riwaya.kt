@@ -18,6 +18,9 @@ import coil3.request.crossfade
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /** The app's parts, made once when the app starts. */
 object Riwaya {
@@ -47,6 +50,25 @@ object Riwaya {
         extensions = Extensions(app, settings, scope)
         home = HomeFeed(app)
         Player.init(app)
+        // Arabic and English are the languages kept by default (asked for by the owner)
+        if (!settings.englishAdded.get()) {
+            settings.languages.set(settings.languages.get() + "en")
+            settings.englishAdded.set(true)
+        }
+        // Sources are checked again every 12 hours; the broken ones are switched off, the fixed ones back on
+        scope.launch {
+            extensions.installed.first { it.isNotEmpty() }
+            delay(4_000)
+            val last = settings.lastHealthRun.get().toLongOrNull() ?: 0L
+            if (System.currentTimeMillis() - last > 12 * 60 * 60 * 1000L) checkSources()
+        }
+    }
+
+    /** Checks every installed source in the reader's languages (also the ones switched off for being broken). */
+    suspend fun checkSources() {
+        val langs = settings.languages.get() + "multi"
+        val off = settings.disabledSources.get()
+        health.checkAll(extensions.installed.value.filter { it.lang in langs && it.source.id.toString() !in off }.map { it.source })
     }
 }
 

@@ -206,7 +206,7 @@ fun OnboardingScreen() {
                             Riwaya.extensions.installAll(langs, nsfw = false) { d, t -> done = d; total = t }
                             installing = false
                             finished = true
-                            Riwaya.scope.launch { Riwaya.health.checkAll(Riwaya.extensions.enabled().map { it.source }) }
+                            Riwaya.scope.launch { Riwaya.checkSources() }
                         }
                     }
                 }

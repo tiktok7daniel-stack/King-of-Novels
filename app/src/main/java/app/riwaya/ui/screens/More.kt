@@ -68,6 +68,7 @@ import app.riwaya.ui.components.TopBar
 import app.riwaya.ui.components.glass
 import app.riwaya.ui.components.glowBackground
 import app.riwaya.ui.theme.LocalRiwaya
+import kotlinx.coroutines.launch
 
 @Composable
 fun MoreScreen() {
@@ -163,8 +164,20 @@ fun SettingsScreen() {
                     }
                 }
             }
+            TranslationTest()
             timing?.let { (first, all) ->
                 Text(stringResource(R.string.last_timing, first / 1000f, all / 1000f), color = c.mute, fontSize = 12.sp)
+            }
+
+            SectionHeader(stringResource(R.string.sources))
+            Column(Modifier.glass()) {
+                val autoHide by st.autoHideBroken.flow.collectAsState()
+                SettingRow(stringResource(R.string.auto_hide), subtitle = stringResource(R.string.auto_hide_sub), icon = R.drawable.ms_extension) {
+                    RSwitch(autoHide) {
+                        st.autoHideBroken.set(it)
+                        if (!it) st.autoDisabled.set(emptySet())
+                    }
+                }
             }
 
             SectionHeader(stringResource(R.string.listening))
@@ -339,5 +352,38 @@ fun WebScreen(route: Route.Web) {
             },
             modifier = Modifier.fillMaxSize(),
         )
+    }
+}
+
+/** Translates one sentence with every engine that is on, and shows each answer or its error. */
+@Composable
+private fun TranslationTest() {
+    val c = LocalRiwaya.current
+    var running by remember { mutableStateOf(false) }
+    var results by remember { mutableStateOf<List<Pair<Engine, String>>>(emptyList()) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val sample = stringResource(R.string.test_sample)
+    Column(Modifier.fillMaxWidth().glass().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.test_translation), color = c.text, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Pill(stringResource(if (running) R.string.searching else R.string.test_run), selected = !running, icon = R.drawable.ms_translate) {
+                if (!running) {
+                    running = true
+                    scope.launch {
+                        results = Riwaya.translator.test(sample)
+                        running = false
+                    }
+                }
+            }
+        }
+        if (results.isEmpty() && !running) Text(stringResource(R.string.test_hint), color = c.mute, fontSize = 12.sp)
+        results.forEach { (e, r) ->
+            val bad = r.startsWith("ERROR")
+            Text(
+                e.name + ": " + r,
+                color = if (bad) c.bad else c.text, fontSize = 12.sp,
+                style = androidx.compose.ui.text.TextStyle(textDirection = androidx.compose.ui.text.style.TextDirection.Content),
+            )
+        }
     }
 }

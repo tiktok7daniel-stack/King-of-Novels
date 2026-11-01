@@ -73,15 +73,19 @@ fun SourcesScreen() {
     val disabled by st.disabledSources.flow.collectAsState()
     val pinned by st.pinnedSources.flow.collectAsState()
     val langs by st.languages.flow.collectAsState()
+    val autoOff by st.autoDisabled.flow.collectAsState()
+    var showBroken by remember { mutableStateOf(false) }
     var kind by remember { mutableStateOf<SourceKind?>(null) }
     var addRepo by remember { mutableStateOf(false) }
     var showAvailable by remember { mutableStateOf(true) }
     val updates = remember(installed, available) { Riwaya.extensions.updates() }
 
     val have = installed.map { it.pkg }.toSet()
-    val groups = installed.filter { kind == null || it.kind == kind }.groupBy { it.lang }
-    val order = groups.keys.sortedWith(compareBy({ it !in langs }, { langs.indexOf(it) }, { it }))
-    val offered = available.filter { it.pkg !in have && !it.nsfw }.groupBy { it.lang }
+    val inLangs = installed.filter { it.lang in langs || it.lang == "multi" }
+    val broken = inLangs.filter { it.source.id.toString() in autoOff }
+    val groups = inLangs.filter { it.source.id.toString() !in autoOff }.filter { kind == null || it.kind == kind }.groupBy { it.lang }
+    val order = groups.keys.sortedWith(compareBy({ it != "ar" }, { it }))
+    val offered = available.filter { it.pkg !in have && !it.nsfw && it.lang in langs }.groupBy { it.lang }
     val offeredOrder = offered.keys.sortedWith(compareBy({ it !in langs }, { it }))
 
     Column(Modifier.fillMaxSize().glowBackground()) {
@@ -91,7 +95,7 @@ fun SourcesScreen() {
                 Spacer(Modifier.width(12.dp))
             } else {
                 RIconButton(R.drawable.ms_refresh, stringResource(R.string.check_sources)) {
-                    Riwaya.scope.launch { Riwaya.health.checkAll(Riwaya.extensions.enabled().map { it.source }) }
+                    Riwaya.scope.launch { Riwaya.checkSources() }
                 }
             }
             RIconButton(R.drawable.ms_add_link, stringResource(R.string.add_repo)) { addRepo = true }
@@ -127,6 +131,39 @@ fun SourcesScreen() {
                 }
                 items(list, key = { it.pkg }) { e ->
                     SourceRow(e, checks[e.source.id], e.source.id.toString() !in disabled, e.source.id.toString() in pinned, updates.containsKey(e.pkg))
+                }
+            }
+            if (broken.isNotEmpty()) {
+                item(key = "broken") {
+                    Column(Modifier.padding(top = 18.dp).fillMaxWidth().clickable { showBroken = !showBroken }) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            HealthDot(app.riwaya.engine.Health.Status.BROKEN)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.auto_disabled_title, broken.size), color = c.text, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                            Sym(R.drawable.ms_keyboard_arrow_down, tint = c.mute)
+                        }
+                        Text(stringResource(R.string.auto_disabled_body), color = c.mute, fontSize = 12.sp)
+                    }
+                }
+                if (showBroken) {
+                    items(broken, key = { "b" + it.pkg }) { e ->
+                        Row(Modifier.fillMaxWidth().glass().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            SourceIcon(e.displayName, e.iconUrl)
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(e.displayName, color = c.text, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(SourceCatalog.languageName(e.lang) + " · " + healthText(checks[e.source.id]), color = c.mute, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                            SourceCatalog.meta(e.pkg)?.site?.takeIf { it.isNotBlank() }?.let { site ->
+                                RIconButton(R.drawable.ms_open_in_browser, stringResource(R.string.open_in_browser), c.mute) { Nav.open(Route.Web(site)) }
+                            }
+                            Pill(stringResource(R.string.keep_on)) {
+                                val id = e.source.id.toString()
+                                st.keepOn.set(st.keepOn.get() + id)
+                                st.autoDisabled.set(st.autoDisabled.get() - id)
+                            }
+                        }
+                    }
                 }
             }
             if (offered.isNotEmpty()) {

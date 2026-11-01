@@ -70,9 +70,28 @@ class Health(private val context: Context) {
                 }.awaitAll()
             }
             withContext(Dispatchers.IO) { save() }
+            applyAutoDisable(sources.map { it.id })
         } finally {
             _running.value = false
         }
+    }
+
+    /**
+     * Switches off the checked sources that do not work, and back on the ones that work again (unless the reader keeps
+     * one on by hand).
+     */
+    private fun applyAutoDisable(checked: List<Long>) {
+        val st = app.riwaya.Riwaya.settings
+        if (!st.autoHideBroken.get()) return
+        val keep = st.keepOn.get()
+        var auto = st.autoDisabled.get()
+        checked.forEach { id ->
+            val key = id.toString()
+            val broken = _checks.value[id]?.status == Status.BROKEN
+            auto = if (broken && key !in keep) auto + key else auto - key
+        }
+        st.autoDisabled.set(auto)
+        st.lastHealthRun.set(System.currentTimeMillis().toString())
     }
 
     suspend fun checkOne(source: CatalogSource): Check {
