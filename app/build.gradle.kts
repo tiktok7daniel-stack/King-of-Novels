@@ -18,8 +18,8 @@ android {
         applicationId = "app.riwaya.novels"
         minSdk = 27
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.0.3"
     }
 
     signingConfigs {

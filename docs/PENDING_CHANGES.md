@@ -19,3 +19,8 @@ Build 2:
 Build 3:
 - FreeWebNovel (freewebnovel.com, IReader extension `ireader.freewebnovel.en`) is installed by itself once and pinned
   on top of the sources, as the owner asked.
+
+Build 4:
+- Reader: the Translated / Bilingual / Original switch stays on screen in every mode (choosing Original used to hide it
+  for good, so the chapter stayed in English). The translate button switches back to the translation and starts it;
+  the bottom line says "Original" when the original is shown.

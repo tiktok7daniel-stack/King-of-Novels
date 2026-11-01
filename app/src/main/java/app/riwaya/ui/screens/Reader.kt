@@ -241,6 +241,10 @@ fun ReaderScreen(route: Route.Reader) {
             }
     }
 
+    LaunchedEffect(mode, needs, original) {
+        if (needs && mode != "ORIGINAL" && original != null && m.translation.value == null && Riwaya.settings.autoTranslate.get()) m.translate()
+    }
+
     val shown: List<String> = original.orEmpty()
     val tr = translation
     val showTranslated = needs && mode != "ORIGINAL"
@@ -322,7 +326,12 @@ fun ReaderScreen(route: Route.Reader) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     ReaderIcon(R.drawable.ms_arrow_back, stringResource(R.string.back), pc.text) { Nav.back() }
                     Text(chapter?.name.orEmpty(), color = pc.text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    if (needs) ReaderIcon(R.drawable.ms_translate, stringResource(R.string.translate), if (tr != null) Color(0xFF3DD6C6) else pc.text) { if (tr == null) m.translate() else sheet = true }
+                    if (needs) {
+                        ReaderIcon(R.drawable.ms_translate, stringResource(R.string.translate), if (showTranslated) Color(0xFF3DD6C6) else pc.text) {
+                            if (mode == "ORIGINAL") st.translationMode.set("TRANSLATED")
+                            if (tr == null || (tr.finished && tr.failed > 0)) m.translate(force = tr != null)
+                        }
+                    }
                     ReaderIcon(R.drawable.ms_text_fields, stringResource(R.string.reader_settings), pc.text) { sheet = true }
                     ReaderIcon(R.drawable.ms_headphones, stringResource(R.string.listen), pc.text) {
                         if (chapters.isNotEmpty()) {
@@ -357,7 +366,7 @@ fun ReaderScreen(route: Route.Reader) {
                         )
                     }
                 }
-                if (needs && mode != "ORIGINAL") {
+                if (needs) {
                     Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, pc.mute.copy(alpha = 0.25f), RoundedCornerShape(12.dp)).padding(3.dp)) {
                         listOf("TRANSLATED" to R.string.mode_translated, "BILINGUAL" to R.string.mode_bilingual, "ORIGINAL" to R.string.mode_original).forEach { (k, label) ->
                             val on = mode == k
@@ -379,7 +388,9 @@ fun ReaderScreen(route: Route.Reader) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(stringResource(R.string.reader_left, ((at + 1) * 100 / total), (wordsLeft / 200).coerceAtLeast(1)), color = pc.mute, fontSize = 11.sp, modifier = Modifier.weight(1f))
-                if (needs && tr != null) {
+                if (needs && mode == "ORIGINAL") {
+                    Text(stringResource(R.string.mode_original), color = pc.mute, fontSize = 11.sp)
+                } else if (needs && tr != null) {
                     Text(
                         if (!tr.finished) stringResource(R.string.translating_progress, tr.done, tr.total)
                         else if (tr.failed >= tr.total) stringResource(R.string.not_translated)
