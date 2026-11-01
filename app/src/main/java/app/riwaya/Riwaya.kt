@@ -6,6 +6,7 @@ import app.riwaya.core.Net
 import app.riwaya.core.Settings
 import app.riwaya.data.HomeFeed
 import app.riwaya.data.Library
+import app.riwaya.data.UpdatesWorker
 import app.riwaya.engine.Extensions
 import app.riwaya.engine.Health
 import app.riwaya.listen.Player
@@ -50,7 +51,7 @@ object Riwaya {
         extensions = Extensions(app, settings, scope)
         home = HomeFeed(app)
         Player.init(app)
-        if (settings.notifyUpdates.get()) app.riwaya.data.UpdatesWorker.schedule(app)
+        if (settings.notifyUpdates.get()) UpdatesWorker.schedule(app)
         // Arabic and English are the languages kept by default (asked for by the owner)
         if (!settings.englishAdded.get()) {
             settings.languages.set(settings.languages.get() + "en")
