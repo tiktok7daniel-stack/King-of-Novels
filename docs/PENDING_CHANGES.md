@@ -24,3 +24,12 @@ Build 4:
 - Reader: the Translated / Bilingual / Original switch stays on screen in every mode (choosing Original used to hide it
   for good, so the chapter stayed in English). The translate button switches back to the translation and starts it;
   the bottom line says "Original" when the original is shown.
+
+Build 5:
+- Novel page: "Where did you stop?" (top button and the stats card): type a chapter number (Arabic digits too) or part
+  of its name, and every chapter up to it is marked read; "read it all" / "read none". Long-press a chapter to select
+  several, then "read up to here", "read" or "unread".
+- Each novel shows "read X of Y chapters" with a progress bar.
+- Reader levels (9, from "قارئ مبتدئ" to "ملك الروايات") from all chapters read; on Home, and in full in More.
+- New-chapter notifications for the library, checked every 4 hours in the background (WorkManager); the
+  notification opens the novel. Can be switched off in Settings.

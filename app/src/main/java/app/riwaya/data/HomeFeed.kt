@@ -116,27 +116,29 @@ class HomeFeed(private val context: Context) {
         return out
     }
 
-    /** Looks for new chapters in the library's novels. */
-    suspend fun checkLibraryUpdates() = coroutineScope {
+    /** Looks for new chapters in the library's novels; gives each novel that has some, with how many and the newest. */
+    suspend fun checkLibraryUpdates(): List<Triple<SavedNovel, Int, String>> = coroutineScope {
         val gate = kotlinx.coroutines.sync.Semaphore(4)
         Riwaya.library.libraryList().map { n ->
             async(Dispatchers.IO) {
                 gate.acquire()
                 try {
-                    val source = Riwaya.extensions.source(n.sourceId) ?: return@async
-                    val chapters = withTimeoutOrNull(20_000) { source.getChapterList(n.toInfo(), emptyList()) } ?: return@async
-                    if (chapters.isNotEmpty()) {
-                        Riwaya.library.cacheChapters(n.id, chapters)
-                        Riwaya.library.setChapterCount(n.sourceId, n.key, chapters.size, markNew = true)
-                    }
+                    val source = Riwaya.extensions.source(n.sourceId) ?: return@async null
+                    val chapters = withTimeoutOrNull(20_000) { source.getChapterList(n.toInfo(), emptyList()) } ?: return@async null
+                    if (chapters.isEmpty()) return@async null
+                    val before = Riwaya.library.get(n.sourceId, n.key)?.totalChapters ?: 0
+                    Riwaya.library.cacheChapters(n.id, chapters)
+                    Riwaya.library.setChapterCount(n.sourceId, n.key, chapters.size, markNew = true)
+                    if (before in 1 until chapters.size) Triple(n, chapters.size - before, chapters.last().name) else null
                 } catch (e: CancellationException) {
                     throw e
                 } catch (_: Throwable) {
+                    null
                 } finally {
                     gate.release()
                 }
             }
-        }.awaitAll()
+        }.awaitAll().filterNotNull()
     }
 
     companion object {

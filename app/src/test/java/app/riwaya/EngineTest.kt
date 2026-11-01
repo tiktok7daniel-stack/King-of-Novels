@@ -39,3 +39,21 @@ class EngineTest {
         assertTrue(lines.first().role == Role.NARRATOR)
     }
 }
+
+class MarkReadTest {
+    private val chapters = List(50) { i -> ireader.core.source.model.ChapterInfo(key = "k$i", name = "الفصل ${i + 1}: عنوان", number = (i + 1).toFloat()) }
+
+    @org.junit.Test
+    fun chapterByNumber() {
+        org.junit.Assert.assertEquals(11, app.riwaya.ui.screens.findChapter(chapters, "12"))
+        org.junit.Assert.assertEquals(11, app.riwaya.ui.screens.findChapter(chapters, "١٢"))
+        org.junit.Assert.assertEquals(null, app.riwaya.ui.screens.findChapter(chapters, "99"))
+    }
+
+    @org.junit.Test
+    fun levelsGrowWithChapters() {
+        org.junit.Assert.assertEquals(1, app.riwaya.data.Levels.levelFor(0).index)
+        org.junit.Assert.assertEquals(3, app.riwaya.data.Levels.levelFor(150).index)
+        org.junit.Assert.assertEquals(9, app.riwaya.data.Levels.levelFor(20_000).index)
+    }
+}

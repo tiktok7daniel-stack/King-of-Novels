@@ -37,6 +37,12 @@ class MainActivity : ComponentActivity() {
 
     private fun handle(intent: Intent?) {
         if (intent?.getBooleanExtra(EXTRA_OPEN_LISTEN, false) == true && Nav.stack.lastOrNull() != Route.ListenFull) Nav.open(Route.ListenFull)
+        // A new-chapters notification opens its novel
+        val key = intent?.getStringExtra(EXTRA_KEY)
+        if (key != null) {
+            Nav.open(Route.Novel(intent.getLongExtra(EXTRA_SOURCE, 0), key, intent.getStringExtra(EXTRA_TITLE).orEmpty(), intent.getStringExtra(EXTRA_COVER).orEmpty()))
+            intent.removeExtra(EXTRA_KEY)
+        }
     }
 
     fun keepScreenOn(on: Boolean) {
@@ -53,6 +59,10 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_LISTEN = "open_listen"
+        const val EXTRA_SOURCE = "novel_source"
+        const val EXTRA_KEY = "novel_key"
+        const val EXTRA_TITLE = "novel_title"
+        const val EXTRA_COVER = "novel_cover"
 
         /** Set by the reader while volume-key paging is on. */
         @Volatile var volumePaging = false

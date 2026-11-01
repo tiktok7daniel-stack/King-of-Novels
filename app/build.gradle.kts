@@ -18,8 +18,8 @@ android {
         applicationId = "app.riwaya.novels"
         minSdk = 27
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.1.0"
     }
 
     signingConfigs {
@@ -93,6 +93,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.11.0")
     implementation("androidx.media:media:1.7.0")
     implementation("androidx.webkit:webkit:1.17.1")
+    implementation("androidx.work:work-runtime:2.12.0")
 
     implementation(platform("androidx.compose:compose-bom-beta:2026.10.00"))
     implementation("androidx.compose.ui:ui")

@@ -3,7 +3,10 @@ package app.riwaya.ui.screens
 import android.os.Build
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,6 +68,7 @@ import app.riwaya.ui.components.Loading
 import app.riwaya.ui.components.Pill
 import app.riwaya.ui.components.RIconButton
 import app.riwaya.ui.components.Sym
+import app.riwaya.ui.components.glass
 import app.riwaya.ui.model
 import app.riwaya.ui.theme.LocalRiwaya
 import coil3.compose.AsyncImage
@@ -144,7 +148,7 @@ class NovelModel(val route: Route.Novel) : ScreenModel() {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun NovelScreen(route: Route.Novel) {
     val c = LocalRiwaya.current
@@ -167,6 +171,8 @@ fun NovelScreen(route: Route.Novel) {
     var filter by remember { mutableStateOf("") }
     var newestFirst by remember { mutableStateOf(false) }
     var menu by remember { mutableStateOf(false) }
+    var selected by remember { mutableStateOf(setOf<Int>()) }
+    var markDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(saved?.newChapters) { if ((saved?.newChapters ?: 0) > 0) Riwaya.library.clearNew(route.sourceId, route.key) }
 
@@ -189,7 +195,17 @@ fun NovelScreen(route: Route.Novel) {
     fun current(): SavedNovel = Riwaya.library.get(route.sourceId, route.key)
         ?: SavedNovel(route.sourceId, route.key, title, cover, lang = ext?.lang.orEmpty())
 
-    LazyColumn(Modifier.fillMaxSize().background(c.bg), contentPadding = PaddingValues(bottom = 24.dp)) {
+    /** The novel is known to the library before its chapters are marked. */
+    fun ensureSaved() {
+        if (Riwaya.library.get(route.sourceId, route.key) == null) {
+            Riwaya.library.remember(route.sourceId, details ?: MangaInfo(key = route.key, title = title, cover = cover), ext?.lang.orEmpty())
+        }
+    }
+
+    val readCount = chapters.count { readStates[it.key]?.read == true }
+
+    Box(Modifier.fillMaxSize()) {
+    LazyColumn(Modifier.fillMaxSize().background(c.bg), contentPadding = PaddingValues(bottom = if (selected.isEmpty()) 24.dp else 110.dp)) {
         item {
             Box(Modifier.fillMaxWidth().height(330.dp)) {
                 if (cover.isNotBlank()) {
@@ -203,6 +219,7 @@ fun NovelScreen(route: Route.Novel) {
                 Row(Modifier.statusBarsPadding().fillMaxWidth().padding(4.dp)) {
                     RIconButton(R.drawable.ms_arrow_back, stringResource(R.string.back)) { Nav.back() }
                     Spacer(Modifier.weight(1f))
+                    RIconButton(R.drawable.ms_done_all, stringResource(R.string.mark_where_stopped)) { markDialog = true }
                     RIconButton(R.drawable.ms_spellcheck, stringResource(R.string.glossary)) { Nav.open(Route.Glossary(route.sourceId, route.key, title)) }
                     Box {
                         RIconButton(R.drawable.ms_more_vert, stringResource(R.string.more)) { menu = true }
@@ -304,6 +321,31 @@ fun NovelScreen(route: Route.Novel) {
                 if (error != null && chapters.isEmpty() && !loadingChapters) {
                     SourceError(route.sourceId, error!!) { m.load() }
                 }
+                if (chapters.isNotEmpty()) {
+                    Column(Modifier.fillMaxWidth().glass().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Sym(R.drawable.ms_auto_stories_fill1, tint = c.amber, size = 22.dp)
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.read_of, readCount, chapters.size), color = c.text, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    if (readCount >= chapters.size) stringResource(R.string.novel_done) else stringResource(R.string.left_chapters, chapters.size - readCount),
+                                    color = c.mute, fontSize = 12.sp,
+                                )
+                            }
+                            Text("${readCount * 100 / chapters.size}%", color = c.amber, fontWeight = FontWeight.Bold)
+                        }
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = { readCount.toFloat() / chapters.size },
+                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                            color = c.amber, trackColor = c.glassLine,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Pill(stringResource(R.string.mark_where_stopped), selected = true, icon = R.drawable.ms_done_all) { markDialog = true }
+                            Pill(stringResource(R.string.select_chapters), icon = R.drawable.ms_check_circle) { selected = setOf(continueIndex ?: 0) }
+                        }
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.chapters_count, chapters.size), style = MaterialTheme.typography.titleMedium, color = c.text, modifier = Modifier.weight(1f))
                     RIconButton(R.drawable.ms_sort, stringResource(R.string.sort)) { newestFirst = !newestFirst }
@@ -330,10 +372,21 @@ fun NovelScreen(route: Route.Novel) {
             val read = state?.read == true
             val isDownloaded = app.riwaya.core.sha1(ch.key) in downloaded
             val isTranslated = Riwaya.translator.cacheHash(ch.key) in translatedSet
+            val isSel = i in selected
             Row(
-                Modifier.fillMaxWidth().clickable { openChapter(i) }.padding(horizontal = 16.dp, vertical = 11.dp),
+                Modifier.fillMaxWidth()
+                    .background(if (isSel) c.amber.copy(alpha = 0.12f) else Color.Transparent)
+                    .combinedClickable(
+                        onClick = { if (selected.isNotEmpty()) selected = if (isSel) selected - i else selected + i else openChapter(i) },
+                        onLongClick = { selected = if (isSel) selected - i else selected + i },
+                    )
+                    .padding(horizontal = 16.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (selected.isNotEmpty()) {
+                    Sym(if (isSel) R.drawable.ms_check_circle_fill1 else R.drawable.ms_radio_button_unchecked, tint = if (isSel) c.amber else c.mute, size = 20.dp)
+                    Spacer(Modifier.width(10.dp))
+                }
                 Text(
                     if (ch.number >= 0) ch.number.let { if (it % 1f == 0f) it.toInt().toString() else it.toString() } else (i + 1).toString(),
                     color = c.mute, fontSize = 12.sp, modifier = Modifier.width(44.dp),
@@ -349,6 +402,99 @@ fun NovelScreen(route: Route.Novel) {
         }
         if (loadingDetails && details?.description.isNullOrBlank()) item { Loading() }
     }
+
+    // Selected chapters: mark them, or everything up to the last one
+    if (selected.isNotEmpty()) {
+        Column(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(c.bg2).navigationBarsPadding().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.selected_count, selected.size), color = c.text, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Pill(stringResource(R.string.select_all)) { selected = shown.map { it.index }.toSet() }
+                Spacer(Modifier.width(6.dp))
+                RIconButton(R.drawable.ms_close, stringResource(R.string.cancel)) { selected = emptySet() }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                AccentButton(stringResource(R.string.read_up_to_here), Modifier.weight(1.2f), icon = R.drawable.ms_done_all) {
+                    ensureSaved()
+                    Riwaya.library.markReadUpTo(route.sourceId, route.key, chapters, selected.max())
+                    selected = emptySet()
+                }
+                GhostButton(stringResource(R.string.mark_read), Modifier.weight(1f), icon = R.drawable.ms_check) {
+                    ensureSaved()
+                    Riwaya.library.markRead(m.id, selected.mapNotNull { chapters.getOrNull(it)?.key }, true)
+                    selected = emptySet()
+                }
+                GhostButton(stringResource(R.string.mark_unread), Modifier.weight(1f), icon = R.drawable.ms_close) {
+                    Riwaya.library.markRead(m.id, selected.mapNotNull { chapters.getOrNull(it)?.key }, false)
+                    selected = emptySet()
+                }
+            }
+        }
+    }
+    }
+
+    if (markDialog) {
+        MarkReadDialog(chapters, onDismiss = { markDialog = false }) { index ->
+            ensureSaved()
+            Riwaya.library.markReadUpTo(route.sourceId, route.key, chapters, index)
+            markDialog = false
+        }
+    }
+}
+
+/** "Where did you stop?": a chapter number or part of its name; everything up to it is marked read. */
+@Composable
+private fun MarkReadDialog(chapters: List<ChapterInfo>, onDismiss: () -> Unit, onConfirm: (Int) -> Unit) {
+    val c = LocalRiwaya.current
+    var text by remember { mutableStateOf("") }
+    val match = remember(text, chapters) { findChapter(chapters, text) }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.mark_where_stopped)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.mark_where_stopped_body), fontSize = 13.sp)
+                androidx.compose.material3.OutlinedTextField(
+                    text, { text = it }, singleLine = true,
+                    label = { Text(stringResource(R.string.chapter_number_or_name)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (text.isNotBlank()) {
+                    Text(
+                        if (match != null) stringResource(R.string.will_mark_up_to, match + 1, chapters[match].name) else stringResource(R.string.chapter_not_found),
+                        color = if (match != null) c.teal else c.bad, fontSize = 12.sp,
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Pill(stringResource(R.string.all_read)) { onConfirm(chapters.size - 1) }
+                    Pill(stringResource(R.string.none_read)) { onConfirm(-1) }
+                }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(enabled = match != null, onClick = { match?.let(onConfirm) }) { Text(stringResource(R.string.save)) }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
+}
+
+/** The chapter the reader means: its number first, else its place in the list, else the last one whose name has the text. */
+internal fun findChapter(chapters: List<ChapterInfo>, text: String): Int? {
+    val t = text.trim()
+    if (t.isEmpty() || chapters.isEmpty()) return null
+    val digits = t.map { ch -> if (ch in '٠'..'٩') ('0' + (ch - '٠')) else ch }.joinToString("")
+    digits.toFloatOrNull()?.let { n ->
+        val byNumber = chapters.indexOfLast { it.number == n }
+        if (byNumber >= 0) return byNumber
+        val byName = chapters.indexOfLast { ch -> Regex("(?<![0-9])${Regex.escape(digits)}(?![0-9])").containsMatchIn(ch.name) }
+        if (byName >= 0) return byName
+        val place = n.toInt() - 1
+        if (place in chapters.indices) return place
+        return null
+    }
+    return chapters.indexOfLast { it.name.contains(t, ignoreCase = true) }.takeIf { it >= 0 }
 }
 
 @Composable

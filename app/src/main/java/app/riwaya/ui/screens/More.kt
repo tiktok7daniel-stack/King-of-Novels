@@ -77,6 +77,7 @@ fun MoreScreen() {
     val active = jobs.count { !it.finished }
     Column(Modifier.fillMaxSize().glowBackground().verticalScroll(rememberScrollState())) {
         TopBar(stringResource(R.string.tab_more), onBack = null)
+        app.riwaya.ui.components.LevelCard(Modifier.padding(horizontal = 16.dp), detailed = true)
         Column(Modifier.padding(16.dp).glass()) {
             SettingRow(stringResource(R.string.sources), subtitle = stringResource(R.string.sources_more_sub), icon = R.drawable.ms_extension, onClick = { Nav.open(Route.Sources) })
             SettingRow(stringResource(R.string.jobs), subtitle = if (active > 0) stringResource(R.string.jobs_running, active) else stringResource(R.string.jobs_sub), icon = R.drawable.ms_download, onClick = { Nav.open(Route.Jobs) })
@@ -176,6 +177,18 @@ fun SettingsScreen() {
                     RSwitch(autoHide) {
                         st.autoHideBroken.set(it)
                         if (!it) st.autoDisabled.set(emptySet())
+                    }
+                }
+            }
+
+            SectionHeader(stringResource(R.string.notifications))
+            Column(Modifier.glass()) {
+                val notify by st.notifyUpdates.flow.collectAsState()
+                val ctx = androidx.compose.ui.platform.LocalContext.current
+                SettingRow(stringResource(R.string.notify_updates), subtitle = stringResource(R.string.notify_updates_sub), icon = R.drawable.ms_notifications) {
+                    RSwitch(notify) {
+                        st.notifyUpdates.set(it)
+                        if (it) app.riwaya.data.UpdatesWorker.schedule(ctx) else app.riwaya.data.UpdatesWorker.cancel(ctx)
                     }
                 }
             }

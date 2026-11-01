@@ -110,6 +110,7 @@ fun HomeScreen() {
                     Text(stringResource(R.string.home_search_hint, Riwaya.extensions.enabled().size), color = c.mute, fontSize = 13.sp)
                 }
             }
+            item { app.riwaya.ui.components.LevelCard(Modifier.padding(horizontal = 16.dp)) }
             if (continueList.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.home_continue), Modifier.padding(horizontal = 16.dp)) }
                 item {

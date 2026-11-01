@@ -50,6 +50,7 @@ object Riwaya {
         extensions = Extensions(app, settings, scope)
         home = HomeFeed(app)
         Player.init(app)
+        if (settings.notifyUpdates.get()) app.riwaya.data.UpdatesWorker.schedule(app)
         // Arabic and English are the languages kept by default (asked for by the owner)
         if (!settings.englishAdded.get()) {
             settings.languages.set(settings.languages.get() + "en")

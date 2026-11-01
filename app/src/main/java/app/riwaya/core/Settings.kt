@@ -88,6 +88,9 @@ class Settings(context: Context) {
     val voiceFemale = str("voice_female", "")
     val autoNextChapter = bool("auto_next_chapter", true)
 
+    // Notifications
+    val notifyUpdates = bool("notify_updates", true)
+
     // App
     val appTheme = str("app_theme", "DARK")
 }

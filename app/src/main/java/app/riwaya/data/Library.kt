@@ -196,6 +196,32 @@ class Library(private val context: Context, private val scope: CoroutineScope) {
         persist()
     }
 
+    /**
+     * Marks every chapter up to [index] (included) as read and the rest as they were, and moves the novel's continue
+     * point to the chapter after it: for a reader who read the novel somewhere else.
+     */
+    fun markReadUpTo(sourceId: Long, key: String, chapters: List<ChapterInfo>, index: Int) {
+        if (chapters.isEmpty()) return
+        val id = SavedNovel.idOf(sourceId, key)
+        val upTo = index.coerceIn(-1, chapters.size - 1)
+        markRead(id, chapters.take(upTo + 1).map { it.key }, true)
+        val next = (upTo + 1).coerceAtMost(chapters.size - 1)
+        val ch = chapters[next]
+        val now = System.currentTimeMillis()
+        _novels.update { all ->
+            val n = all[id] ?: return@update all
+            all + (id to n.copy(
+                lastReadAt = now,
+                lastChapterKey = ch.key,
+                lastChapterName = ch.name,
+                lastChapterIndex = next,
+                lastFraction = if (upTo >= chapters.size - 1) 1f else 0f,
+                totalChapters = maxOf(n.totalChapters, chapters.size),
+            ))
+        }
+        persist()
+    }
+
     fun removeHistory(novelId: String) {
         _history.update { h -> h.filterNot { it.novelId == novelId } }
         persist()
