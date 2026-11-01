@@ -1,0 +1,393 @@
+<title>RIWAYA Night Library</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600&family=Amiri:wght@700&family=Literata:opsz,wght@7..72,400;7..72,600&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap">
+<style>
+/* Layout: a gallery of phone frames on a "night library" wall; each phone is a self-contained app theme (ink or paper). */
+:root{
+  /* page chrome (dark-first) */
+  --wall:#0A0B0F; --wall-2:#12141B; --wall-fg:#E9E4D8; --wall-mute:#8D8A84; --wall-line:#22252F;
+  /* app tokens: Night Library */
+  --ink:#0E0F14; --ink-2:#161821; --glass:rgba(255,255,255,.06); --glass-line:rgba(255,255,255,.10);
+  --text:#EFEAE0; --mute:#9A978F; --amber:#F5B451; --coral:#FF7A59; --teal:#3DD6C6;
+  --ok:#46D39A; --warn:#F5B451; --bad:#FF5D5D;
+  --paper:#F6F1E7; --paper-ink:#2B2620; --paper-mute:#8A7F70;
+  --ui:"IBM Plex Sans Arabic","Segoe UI",Tahoma,sans-serif;
+  --read:"Noto Naskh Arabic","Amiri","Times New Roman",serif;
+  --display:"Amiri","Noto Naskh Arabic",serif;
+  --latin-read:"Literata",Georgia,serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --wall:#ECE6DA; --wall-2:#E2DACB; --wall-fg:#1E1A15; --wall-mute:#6E665B; --wall-line:#CFC5B3; color-scheme:light}}
+:root[data-theme="light"]{--wall:#ECE6DA; --wall-2:#E2DACB; --wall-fg:#1E1A15; --wall-mute:#6E665B; --wall-line:#CFC5B3; color-scheme:light}
+
+*{box-sizing:border-box}
+body{background:var(--wall);color:var(--wall-fg);font-family:var(--ui);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 64px}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:"liga";font-feature-settings:"liga";font-variation-settings:"FILL" 0;vertical-align:middle}
+.ms.f{font-variation-settings:"FILL" 1}
+header.top{max-width:1180px;margin:0 auto 40px;display:grid;gap:14px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--wall-mute)}
+h1{font-family:var(--display);font-size:clamp(40px,7vw,72px);line-height:1;margin:0;font-weight:700;text-wrap:balance}
+h1 span{background:linear-gradient(90deg,var(--amber),var(--coral));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{max-width:62ch;color:var(--wall-mute);line-height:1.8;margin:0;font-size:15px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:13px;color:var(--wall-mute)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-inline-end:6px}
+section.row{max-width:1180px;margin:0 auto 56px}
+section.row>h2{font-size:15px;font-weight:600;margin:0 0 6px}
+section.row>p{margin:0 0 20px;color:var(--wall-mute);font-size:13px;max-width:70ch;line-height:1.7}
+.gallery{display:flex;flex-wrap:wrap;gap:28px;justify-content:flex-start}
+figure{margin:0;display:grid;gap:10px;justify-items:center}
+figcaption{font-size:12px;color:var(--wall-mute);letter-spacing:.06em}
+
+/* phone */
+.phone{width:320px;max-width:100%;height:680px;border-radius:40px;padding:10px;background:#050507;box-shadow:0 30px 60px -20px rgba(0,0,0,.55),inset 0 0 0 1.5px #2A2C33}
+.app{direction:rtl;height:100%;border-radius:31px;overflow:hidden;position:relative;background:var(--ink);color:var(--text);font-family:var(--ui);font-size:13px;display:flex;flex-direction:column}
+.app.paper{--ink:var(--paper);--ink-2:#EDE6D8;--glass:rgba(43,38,32,.05);--glass-line:rgba(43,38,32,.12);--text:var(--paper-ink);--mute:var(--paper-mute)}
+.status{display:flex;justify-content:space-between;padding:10px 20px 4px;font-size:11px;color:var(--mute);direction:ltr}
+.scroll{flex:1;overflow:hidden;padding:4px 16px 0;position:relative;display:flex;flex-direction:column;gap:14px}
+.glow-bg::before{content:"";position:absolute;inset:-40% -30% auto;height:360px;background:radial-gradient(closest-side,rgba(245,180,81,.20),transparent),radial-gradient(closest-side at 80% 60%,rgba(61,214,198,.12),transparent);pointer-events:none}
+.glass{background:var(--glass);border:1px solid var(--glass-line);border-radius:20px;backdrop-filter:blur(14px)}
+.row-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.h-sec{font-weight:600;font-size:14px}
+.link{color:var(--amber);font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:999px;border:1px solid var(--glass-line);font-size:12px;color:var(--text);white-space:nowrap}
+.chip.on{background:linear-gradient(90deg,var(--amber),var(--coral));color:#1A1209;border-color:transparent;font-weight:600}
+.chip.t{border-color:rgba(61,214,198,.5);color:var(--teal)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips.line{flex-wrap:nowrap;overflow:hidden}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:42px;padding:0 16px;border-radius:14px;font-weight:600;font-size:13px;border:0;font-family:inherit}
+.btn.p{background:linear-gradient(90deg,var(--amber),var(--coral));color:#1A1209;box-shadow:0 8px 24px -8px rgba(255,122,89,.6)}
+.btn.g{background:var(--glass);color:var(--text);border:1px solid var(--glass-line)}
+.mute{color:var(--mute)}
+.small{font-size:11px}
+
+/* covers (pure CSS) */
+.cover{border-radius:12px;position:relative;overflow:hidden;flex:none;box-shadow:0 10px 24px -10px var(--cg,#000)}
+.cover::after{content:attr(data-t);position:absolute;inset:auto 8px 8px;font-family:var(--display);font-weight:700;color:#fff;font-size:13px;line-height:1.15;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.c1{background:radial-gradient(circle at 70% 25%,#F8D27A 0 10%,transparent 30%),linear-gradient(160deg,#3B2A16,#120C08);--cg:#9a6a20}
+.c2{background:radial-gradient(circle at 30% 30%,#7FE7DA 0 6%,transparent 26%),linear-gradient(170deg,#0F2D35,#05090C);--cg:#1f8a80}
+.c3{background:radial-gradient(circle at 60% 40%,#FF9E80 0 8%,transparent 30%),linear-gradient(160deg,#4A1622,#120509);--cg:#a33a3a}
+.c4{background:radial-gradient(circle at 40% 30%,#C9B6FF 0 7%,transparent 28%),linear-gradient(160deg,#241A45,#09060F);--cg:#5c47a8}
+.c5{background:radial-gradient(circle at 70% 30%,#B7E57A 0 7%,transparent 28%),linear-gradient(160deg,#1C3317,#070C05);--cg:#4d7a2a}
+.c6{background:radial-gradient(circle at 50% 30%,#FFE1A8 0 9%,transparent 30%),linear-gradient(160deg,#4B3A1E,#1B140A);--cg:#9a7a30}
+.hrow{display:flex;gap:10px;overflow:hidden}
+.card-s{width:92px;flex:none;display:grid;gap:5px}
+.card-s .cover{width:92px;height:128px}
+.card-s b{font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* nav + mini player */
+.nav{display:grid;grid-template-columns:repeat(5,1fr);padding:8px 6px 14px;background:var(--ink-2);border-top:1px solid var(--glass-line)}
+.nav a{display:grid;justify-items:center;gap:2px;font-size:10px;color:var(--mute);text-decoration:none}
+.nav a.on{color:var(--amber)}
+.nav a.on .ms{font-variation-settings:"FILL" 1}
+.mini{margin:0 10px 8px;display:flex;align-items:center;gap:10px;padding:8px;border-radius:16px;background:linear-gradient(90deg,rgba(245,180,81,.16),rgba(61,214,198,.10));border:1px solid var(--glass-line)}
+.mini .cover{width:34px;height:44px;border-radius:8px}
+.mini .cover::after{content:""}
+.mini .meta{flex:1;min-width:0}
+.mini .meta b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.round{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--text);color:var(--ink)}
+.bar{height:3px;border-radius:3px;background:var(--glass-line);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--amber),var(--coral))}
+
+/* home */
+.greet{display:flex;align-items:center;justify-content:space-between}
+.greet h3{margin:0;font-family:var(--display);font-size:24px;font-weight:700}
+.search{display:flex;align-items:center;gap:8px;padding:0 14px;height:44px}
+.cont{display:flex;gap:12px;padding:12px;align-items:center}
+.cont .cover{width:62px;height:86px}
+.cont .cover::after{content:""}
+.ring{width:44px;height:44px;border-radius:50%;background:conic-gradient(var(--amber) 0 68%,var(--glass-line) 0);display:grid;place-items:center;flex:none}
+.ring span{width:36px;height:36px;border-radius:50%;background:var(--ink);display:grid;place-items:center;font-size:11px;font-weight:600}
+.newch{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--glass-line)}
+.newch .cover{width:36px;height:48px;border-radius:8px}.newch .cover::after{content:""}
+.badge{min-width:22px;height:20px;border-radius:10px;padding:0 6px;background:var(--teal);color:#032521;font-size:11px;font-weight:700;display:grid;place-items:center}
+
+/* onboarding */
+.step{display:flex;gap:6px}
+.step i{height:4px;flex:1;border-radius:4px;background:var(--glass-line)}
+.step i.on{background:linear-gradient(90deg,var(--amber),var(--coral))}
+.lang{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.lang .code{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-weight:700;background:var(--ink-2);font-size:12px}
+.lang.on{border-color:rgba(245,180,81,.6);background:rgba(245,180,81,.08)}
+.check{margin-inline-start:auto;color:var(--amber)}
+
+/* sources */
+.src{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--glass-line)}
+.src .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#1A1209}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.sw{width:34px;height:20px;border-radius:10px;background:var(--glass-line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;inset-inline-end:3px;width:14px;height:14px;border-radius:50%;background:var(--mute)}
+.sw.on{background:var(--teal)}.sw.on::after{inset-inline-end:auto;inset-inline-start:3px;background:#fff}
+.grp{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);margin-top:4px}
+.grp b{color:var(--text);font-size:13px}
+
+/* novel page */
+.hero{position:relative;padding:0 16px 14px;display:flex;gap:14px;align-items:flex-end}
+.hero-bg{position:absolute;inset:0 0 auto;height:250px;background:linear-gradient(160deg,#3B2A16,#120C08);filter:blur(0);opacity:.9}
+.hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--ink))}
+.hero .cover{width:104px;height:146px;z-index:1}
+.hero .t{z-index:1;display:grid;gap:4px;min-width:0}
+.hero .t h4{margin:0;font-family:var(--display);font-size:22px;line-height:1.2}
+.ch{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--glass-line);font-size:12px}
+.ch .n{width:34px;color:var(--mute);font-variant-numeric:tabular-nums}
+.ch .name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch.read{color:var(--mute)}
+
+/* reader */
+.rtop{display:flex;align-items:center;gap:10px;padding:6px 16px 8px}
+.rtop b{flex:1;font-size:13px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog{height:2px;background:var(--glass-line)}.prog i{display:block;height:100%;width:58%;background:var(--teal)}
+.page{padding:14px 22px;font-family:var(--read);font-size:15.5px;line-height:2.05;display:grid;gap:12px;flex:1;overflow:hidden}
+.page p{margin:0;text-align:justify}
+.page .orig{font-family:var(--latin-read);direction:ltr;text-align:left;font-size:12.5px;line-height:1.7;color:var(--mute);border-inline-start:2px solid rgba(61,214,198,.5);padding-inline-start:10px}
+.page .pending{opacity:.38;font-family:var(--latin-read);direction:ltr;text-align:left;font-size:14px;line-height:1.8}
+.page .name{background:rgba(245,180,81,.25);border-radius:4px;padding:0 2px}
+.rfoot{display:flex;justify-content:space-between;align-items:center;padding:8px 20px 16px;font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
+.modes{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-line);margin:0 16px}
+.modes span{flex:1;text-align:center;padding:6px 0;border-radius:9px;font-size:11px}
+.modes span.on{background:var(--paper-ink);color:var(--paper)}
+
+/* listen */
+.lcover{width:170px;height:226px;margin:6px auto 0;border-radius:22px;box-shadow:0 30px 60px -20px rgba(245,180,81,.55)}
+.lcover::after{font-size:20px;inset:auto 14px 14px}
+.lpara{font-family:var(--read);font-size:15px;line-height:1.9;text-align:center;padding:0 6px}
+.lpara mark{background:none;color:var(--amber)}
+.ctl{display:flex;align-items:center;justify-content:center;gap:22px}
+.play{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--amber),var(--coral));color:#1A1209;box-shadow:0 12px 30px -8px rgba(255,122,89,.7)}
+.play .ms{font-size:34px}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.opts div{display:grid;justify-items:center;gap:3px;padding:8px 0;font-size:10.5px;color:var(--mute)}
+.opts b{color:var(--text);font-size:12px;font-weight:600}
+.wave{display:flex;align-items:center;justify-content:center;gap:3px;height:26px}
+.wave i{width:3px;border-radius:2px;background:var(--teal);opacity:.8}
+
+/* search + settings */
+.res{padding:10px 12px;display:grid;gap:8px}
+.res .head{display:flex;align-items:center;gap:8px;font-size:12px}
+.spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--glass-line);border-top-color:var(--amber)}
+.mini-c{display:flex;gap:8px}.mini-c .cover{width:52px;height:72px;border-radius:9px}.mini-c .cover::after{content:""}
+.merged{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;padding:3px 8px;border-radius:8px;background:rgba(61,214,198,.12);color:var(--teal)}
+.eng{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--glass-line)}
+.eng:last-child{border-bottom:0}
+.eng .grip{color:var(--mute)}
+.eng .nm{flex:1;min-width:0}
+.eng .nm b{display:block;font-size:12.5px}
+.tag{font-size:10px;padding:2px 7px;border-radius:6px;border:1px solid var(--glass-line);color:var(--mute)}
+.stepper{display:flex;align-items:center;gap:10px;padding:12px}
+.stepper .v{display:flex;gap:4px;margin-inline-start:auto}
+.stepper .v i{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-style:normal;font-size:11px;border:1px solid var(--glass-line)}
+.stepper .v i.on{background:var(--teal);color:#032521;border-color:transparent;font-weight:700}
+
+.notes{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:18px}
+.note{border-top:1px solid var(--wall-line);padding-top:14px;display:grid;gap:6px}
+.note h3{margin:0;font-size:14px}
+.note p{margin:0;color:var(--wall-mute);font-size:13px;line-height:1.75}
+@media (prefers-reduced-motion:no-preference){.spin{animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(1turn)}}}
+</style>
+
+<header class="top" dir="rtl">
+  <div class="eyebrow">RIWAYA · UI mockup · v1</div>
+  <h1>رواية <span>Night Library</span></h1>
+  <p class="lede">التصميم ميكس بين عالمين: التصفح والاكتشاف في مساحة حبر غامقة بزجاج وتوهج دافي، والقراية على صفحة ورق هادية. خط الواجهة IBM Plex Sans Arabic، وخط القراية Noto Naskh، والعناوين Amiri. كل حاجة من اليمين للشمال، وكل الأيقونات Material Symbols.</p>
+  <div class="legend">
+    <span><i style="background:#0E0F14;border:1px solid #333"></i>Ink #0E0F14</span>
+    <span><i style="background:linear-gradient(90deg,#F5B451,#FF7A59)"></i>Amber to Coral</span>
+    <span><i style="background:#3DD6C6"></i>Teal #3DD6C6</span>
+    <span><i style="background:#F6F1E7"></i>Paper #F6F1E7</span>
+  </div>
+</header>
+
+<section class="row" dir="rtl">
+  <h2>المسار الأساسي: أول فتح، الرئيسية، الرواية، القراية، الاستماع</h2>
+  <p>أول مرة تفتح البرنامج بيتظبط في 3 خطوات. بعد كده الرئيسية بتتبني من اختياراتك: لغاتك، والأنواع اللي بتحبها، ومكتبتك.</p>
+  <div class="gallery">
+
+  <!-- 1 Onboarding -->
+  <figure><div class="phone"><div class="app glow-bg">
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="scroll" style="gap:16px;z-index:1">
+      <div class="step"><i class="on"></i><i></i><i></i></div>
+      <div style="display:grid;gap:6px;margin-top:6px">
+        <span class="mute small">الخطوة 1 من 3</span>
+        <div style="font-family:var(--display);font-size:26px;font-weight:700;line-height:1.3">بتحب تقرا بأنهي لغات؟</div>
+        <span class="mute">هنجيب لك المصادر والاقتراحات بالترتيب ده.</span>
+      </div>
+      <div class="glass lang on"><span class="code">ع</span><div><b>العربية</b><div class="mute small">20 مصدر · مترجم ومؤلف</div></div><span class="ms f check">check_circle</span></div>
+      <div class="glass lang on"><span class="code">EN</span><div><b>English</b><div class="mute small">98 مصدر · تترجم للعربي</div></div><span class="ms f check">check_circle</span></div>
+      <div class="glass lang"><span class="code">中</span><div><b>中文</b><div class="mute small">4 مصادر · تترجم للعربي</div></div><span class="ms check mute">radio_button_unchecked</span></div>
+      <div class="glass lang"><span class="code">FR</span><div><b>Français</b><div class="mute small">5 مصادر</div></div><span class="ms check mute">radio_button_unchecked</span></div>
+      <div class="glass lang"><span class="code">RU</span><div><b>Русский</b><div class="mute small">5 مصادر</div></div><span class="ms check mute">radio_button_unchecked</span></div>
+      <div style="margin-top:auto;padding-bottom:18px;display:grid"><span class="btn p">التالي: الأنواع المفضلة <span class="ms">arrow_back</span></span></div>
+    </div>
+  </div></div><figcaption>Onboarding · languages</figcaption></figure>
+
+  <!-- 2 Home -->
+  <figure><div class="phone"><div class="app glow-bg">
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="scroll" style="z-index:1">
+      <div class="greet"><div><span class="mute small">مساء الخير</span><h3>كمّل حكايتك</h3></div><span class="ms" style="font-size:24px">notifications</span></div>
+      <div class="glass search"><span class="ms mute">search</span><span class="mute">ابحث في 34 مصدر…</span></div>
+      <div class="glass cont">
+        <div class="cover c1"></div>
+        <div style="flex:1;min-width:0;display:grid;gap:3px"><b>سيد الغوامض</b><span class="mute small">الفصل 412 · مترجم للعربي</span><span class="chip t" style="padding:3px 8px;width:max-content;font-size:10.5px"><span class="ms" style="font-size:14px">headphones</span>بتسمعها</span></div>
+        <div class="ring"><span>68%</span></div>
+      </div>
+      <div class="chips line"><span class="chip on">الكل</span><span class="chip">فانتازيا</span><span class="chip">زراعة</span><span class="chip">رومانسي</span><span class="chip">نظام</span></div>
+      <div class="row-h"><span class="h-sec">مقترحة ليك</span><span class="link">الكل</span></div>
+      <div class="hrow">
+        <div class="card-s"><div class="cover c2" data-t="عبد الظل"></div><b>عبد الظل</b><span class="mute small">KolNovel</span></div>
+        <div class="card-s"><div class="cover c4" data-t="القارئ العليم"></div><b>القارئ العليم</b><span class="mute small">English · AR</span></div>
+        <div class="card-s"><div class="cover c3" data-t="البداية بعد النهاية"></div><b>البداية بعد النهاية</b><span class="mute small">Riwyat</span></div>
+      </div>
+      <div class="row-h"><span class="h-sec">فصول جديدة في مكتبتك</span><span class="badge">7</span></div>
+      <div class="newch"><div class="cover c5"></div><div style="flex:1"><b>طريق الخالدين</b><div class="mute small">3 فصول جديدة · SeaNovel</div></div><span class="ms mute">chevron_left</span></div>
+    </div>
+    <div class="mini"><div class="cover c1"></div><div class="meta"><b>سيد الغوامض · 412</b><div class="bar"><i style="width:40%"></i></div></div><span class="round"><span class="ms f">pause</span></span></div>
+    <nav class="nav"><a class="on"><span class="ms">home</span>الرئيسية</a><a><span class="ms">explore</span>اكتشف</a><a><span class="ms">auto_stories</span>المكتبة</a><a><span class="ms">headphones</span>استماع</a><a><span class="ms">more_horiz</span>المزيد</a></nav>
+  </div></div><figcaption>Home · dark</figcaption></figure>
+
+  <!-- 3 Novel page -->
+  <figure><div class="phone"><div class="app">
+    <div class="hero-bg"></div>
+    <div class="status" style="z-index:1;position:relative"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div style="display:flex;justify-content:space-between;padding:4px 16px;z-index:1;position:relative"><span class="ms">arrow_forward</span><span class="ms">more_vert</span></div>
+    <div class="hero" style="margin-top:34px">
+      <div class="cover c1" data-t="سيد الغوامض"></div>
+      <div class="t"><h4>سيد الغوامض</h4><span class="mute small" style="font-family:var(--latin-read);direction:ltr;text-align:right">Lord of the Mysteries</span><span class="small">Cuttlefish · مستمرة</span>
+        <span class="merged"><span class="ms" style="font-size:14px">layers</span>موجودة في 3 مصادر</span></div>
+    </div>
+    <div class="scroll" style="padding-top:0;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><span class="btn p"><span class="ms f">menu_book</span>كمّل 412</span><span class="btn g"><span class="ms">headphones</span>استمع</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><span class="btn g" style="height:36px;font-size:12px"><span class="ms">translate</span>ترجم 10 جايين</span><span class="btn g" style="height:36px;font-size:12px"><span class="ms f" style="color:var(--coral)">favorite</span>في المكتبة</span></div>
+      <p class="mute" style="margin:0;line-height:1.8;font-size:12.5px">في عصر البخار والآلات، يصحى كلاين موريتي في جسم تاني ومعاه مسدس وورقة… <span class="link">المزيد</span></p>
+      <div class="chips line"><span class="chip">غموض</span><span class="chip">فانتازيا</span><span class="chip">رعب</span></div>
+      <div class="row-h"><span class="h-sec">1,430 فصل</span><span class="chip" style="padding:4px 9px"><span class="ms" style="font-size:16px">swap_horiz</span>المصدر: KolNovel</span></div>
+      <div>
+        <div class="ch"><span class="n">413</span><span class="name">الشخص اللي ورا الباب</span><span class="ms f" style="color:var(--teal);font-size:18px">translate</span><span class="ms" style="font-size:18px">download</span></div>
+        <div class="ch"><span class="n">412</span><span class="name">نجمة الحظ الأحمر</span><span class="ms f" style="color:var(--teal);font-size:18px">translate</span><span class="ms f" style="font-size:18px;color:var(--amber)">download_done</span></div>
+        <div class="ch read"><span class="n">411</span><span class="name">رسالة من تينغن</span><span class="ms f" style="font-size:18px">done_all</span></div>
+      </div>
+    </div>
+  </div></div><figcaption>Novel page</figcaption></figure>
+
+  <!-- 4 Reader -->
+  <figure><div class="phone"><div class="app paper">
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="rtop"><span class="ms">arrow_forward</span><b>412 · نجمة الحظ الأحمر</b><span class="ms">text_fields</span><span class="ms">headphones</span></div>
+    <div class="prog"><i></i></div>
+    <div style="padding:10px 0 0"><div class="modes"><span>مترجم</span><span class="on">ثنائي اللغة</span><span>الأصل</span></div></div>
+    <div class="page">
+      <p>رفع <span class="name">كلاين</span> عينيه ناحية السما الرمادي فوق <span class="name">تينغن</span>، وحس إن الهوا نفسه بيستناه يقول حاجة.</p>
+      <p class="orig">Klein raised his eyes to the grey sky above Tingen and felt the very air waiting for him to speak.</p>
+      <p>«لو كانت النجمة دي فعلًا بتجيب الحظ، ليه كل اللي شافوها اختفوا؟»</p>
+      <p class="pending">The answer came from behind him, in a voice he had not heard for three years…</p>
+      <p class="pending">He did not turn around.</p>
+    </div>
+    <div class="rfoot"><span>58% · فاضل 6 دقايق</span><span style="display:flex;align-items:center;gap:6px"><span class="spin"></span>بيترجم 3 من 5</span></div>
+  </div></div><figcaption>Reader · paper · bilingual</figcaption></figure>
+
+  <!-- 5 Listen -->
+  <figure><div class="phone"><div class="app glow-bg">
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="scroll" style="z-index:1;gap:14px">
+      <div class="row-h"><span class="ms">keyboard_arrow_down</span><span class="mute small">بتسمع من المكتبة</span><span class="ms">queue_music</span></div>
+      <div class="cover c1 lcover" data-t="سيد الغوامض"></div>
+      <div style="text-align:center;display:grid;gap:2px"><b style="font-size:15px">الفصل 412 · نجمة الحظ الأحمر</b><span class="mute small">الفقرة 18 من 64 · صوت عربي (Piper)</span></div>
+      <p class="lpara"><mark>«لو كانت النجمة دي فعلًا بتجيب الحظ، ليه كل اللي شافوها اختفوا؟»</mark></p>
+      <div class="wave" aria-hidden="true"></div>
+      <div class="bar"><i style="width:28%"></i></div>
+      <div class="ctl"><span class="ms" style="font-size:26px">skip_next</span><span class="ms" style="font-size:28px">forward_10</span><span class="play"><span class="ms f">pause</span></span><span class="ms" style="font-size:28px">replay_10</span><span class="ms" style="font-size:26px">skip_previous</span></div>
+      <div class="glass opts"><div><span class="ms">speed</span><b>1.25×</b>السرعة</div><div><span class="ms">record_voice_over</span><b>3 أصوات</b>الشخصيات</div><div><span class="ms">bedtime</span><b>30 د</b>المؤقت</div><div><span class="ms">translate</span><b>عربي</b>النص</div></div>
+    </div>
+  </div></div><figcaption>Listen · multi-voice</figcaption></figure>
+  </div>
+</section>
+
+<section class="row" dir="rtl">
+  <h2>المصادر والبحث والترجمة</h2>
+  <p>المصادر متقسمة حسب اللغة، ولغاتك المفضلة فوق. كل مصدر جنبه نقطة: أخضر شغال، أصفر بطيء، أحمر واقف ومكتوب السبب. البحث بيعرض نتايج كل مصدر أول ما توصل، ومفيش مصدر يعطّل الباقي أكتر من 8 ثواني.</p>
+  <div class="gallery">
+
+  <!-- 6 Sources -->
+  <figure><div class="phone"><div class="app">
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="scroll">
+      <div class="row-h"><b style="font-size:18px">المصادر</b><span class="ms">add_link</span></div>
+      <div class="chips line"><span class="chip on">مفعّلة 22</span><span class="chip">مترجم</span><span class="chip">مؤلف</span><span class="chip">آلي MTL</span><span class="chip">لايت نوفل</span></div>
+      <div class="grp"><span class="ms f" style="color:var(--amber);font-size:16px">keep</span><b>العربية</b>· 20 + 3 جديدة</div>
+      <div>
+        <div class="src"><span class="ico" style="background:#F5B451">مل</span><div style="flex:1"><b>ملوك الروايات</b><div class="mute small"><span class="dot" style="background:var(--ok)"></span> شغال · من 4 دقايق</div></div><span class="sw on"></span></div>
+        <div class="src"><span class="ico" style="background:#3DD6C6">مج</span><div style="flex:1"><b>مجرة الروايات</b><div class="mute small"><span class="dot" style="background:var(--ok)"></span> شغال · من 4 دقايق</div></div><span class="sw on"></span></div>
+        <div class="src"><span class="ico" style="background:#FF7A59">بح</span><div style="flex:1"><b>بحر الروايات</b><div class="mute small"><span class="dot" style="background:var(--warn)"></span> بطيء · 6.2 ث</div></div><span class="sw on"></span></div>
+        <div class="src"><span class="ico" style="background:#C9B6FF">مك</span><div style="flex:1"><b>مكتبة الخيال</b><div class="mute small"><span class="dot" style="background:var(--bad)"></span> محتاج تفتحه مرة في المتصفح</div></div><span class="sw on"></span></div>
+        <div class="src"><span class="ico" style="background:#B7E57A">جن</span><div style="flex:1"><b>جنة الروايات</b><div class="mute small"><span class="dot" style="background:var(--ok)"></span> شغال</div></div><span class="sw"></span></div>
+      </div>
+      <div class="grp"><span class="ms f" style="color:var(--amber);font-size:16px">keep</span><b>English</b>· 98 · بتتترجم تلقائي</div>
+      <div class="src"><span class="ico" style="background:#E9E4D8">RN</span><div style="flex:1"><b>RoyalRoad</b><div class="mute small"><span class="dot" style="background:var(--ok)"></span> Original</div></div><span class="sw on"></span></div>
+    </div>
+  </div></div><figcaption>Sources · grouped + health</figcaption></figure>
+
+  <!-- 7 Global search -->
+  <figure><div class="phone"><div class="app">
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="scroll">
+      <div class="glass search"><span class="ms">arrow_forward</span><b style="flex:1">القارئ العليم</b><span class="ms mute">close</span></div>
+      <div class="mute small">22 مصدر · 17 رد · 3 لسه بيدوروا · 2 مهلة</div>
+      <div class="glass res"><div class="head"><span class="merged"><span class="ms" style="font-size:14px">layers</span>نفس الرواية في 4 مصادر</span></div>
+        <div class="mini-c"><div class="cover c4"></div><div><b>وجهة نظر القارئ العليم</b><div class="mute small">Omniscient Reader's Viewpoint</div><div class="mute small">KolNovel · Riwyat · MKNOV · NovelUpdates</div></div></div></div>
+      <div class="glass res"><div class="head"><span class="dot" style="background:var(--ok)"></span><b>مجرة الروايات</b><span class="mute small" style="margin-inline-start:auto">0.9 ث</span></div>
+        <div class="hrow"><div class="cover c4" style="width:52px;height:72px;border-radius:9px"></div><div class="cover c2" style="width:52px;height:72px;border-radius:9px"></div><div class="cover c6" style="width:52px;height:72px;border-radius:9px"></div></div></div>
+      <div class="glass res"><div class="head"><span class="spin"></span><b>بحر الروايات</b><span class="mute small" style="margin-inline-start:auto">بيدوّر…</span></div></div>
+      <div class="glass res"><div class="head"><span class="dot" style="background:var(--bad)"></span><b>Novel4Up</b><span class="mute small" style="margin-inline-start:auto">مهلة 8 ث</span></div></div>
+    </div>
+  </div></div><figcaption>Global search · streamed</figcaption></figure>
+
+  <!-- 8 Translation settings -->
+  <figure><div class="phone"><div class="app">
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="scroll">
+      <div class="row-h"><span class="ms">arrow_forward</span><b style="font-size:16px;flex:1;margin-inline-start:10px">الترجمة</b></div>
+      <span class="mute small">ترتيب المحركات (اسحب عشان تغير الترتيب). المحرك اللي يخلص رصيده بيتخطّى لحد آخر الجلسة.</span>
+      <div class="glass">
+        <div class="eng"><span class="ms grip">drag_indicator</span><span class="ms" style="color:var(--amber)">auto_awesome</span><div class="nm"><b>ذكاء اصطناعي + قاموس الأسماء</b><span class="mute small">Gemini · مفتاحك</span></div><span class="sw on"></span></div>
+        <div class="eng"><span class="ms grip">drag_indicator</span><span class="ms">g_translate</span><div class="nm"><b>DeepL</b><span class="mute small">مفيش مفتاح</span></div><span class="tag">متوقف</span></div>
+        <div class="eng"><span class="ms grip">drag_indicator</span><span class="ms">translate</span><div class="nm"><b>Google مجاني</b><span class="mute small">الأسرع للبداية</span></div><span class="sw on"></span></div>
+        <div class="eng"><span class="ms grip">drag_indicator</span><span class="ms">cloud_off</span><div class="nm"><b>ML Kit بدون نت</b><span class="mute small">احتياطي</span></div><span class="sw on"></span></div>
+      </div>
+      <div class="glass stepper"><span class="ms" style="color:var(--teal)">bolt</span><div><b>دفعات متوازية</b><div class="mute small">أسرع، بيستهلك الرصيد أسرع</div></div><div class="v"><i>1</i><i>2</i><i class="on">3</i><i>4</i><i>6</i></div></div>
+      <div class="glass stepper"><span class="ms" style="color:var(--teal)">fast_forward</span><div><b>ترجم الفصل الجاي مقدمًا</b><div class="mute small">لما توصل 60% · واي فاي بس</div></div><span class="sw on" style="margin-inline-start:auto"></span></div>
+      <div class="glass stepper"><span class="ms" style="color:var(--teal)">spellcheck</span><div><b>قاموس الأسماء</b><div class="mute small">سيد الغوامض · 84 اسم</div></div><span class="ms mute" style="margin-inline-start:auto">chevron_left</span></div>
+    </div>
+  </div></div><figcaption>Translation · engine chain</figcaption></figure>
+
+  <!-- 9 Home light -->
+  <figure><div class="phone"><div class="app paper">
+    <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
+    <div class="scroll">
+      <div class="greet"><div><span class="mute small">صباح الخير</span><h3>المكتبة</h3></div><span class="ms" style="font-size:24px">tune</span></div>
+      <div class="chips line"><span class="chip on">بقرأها 12</span><span class="chip">مخلصة</span><span class="chip">مؤجلة</span><span class="chip">مترجمة</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div class="card-s" style="width:auto"><div class="cover c1" style="width:100%" data-t="سيد الغوامض"></div><b>سيد الغوامض</b><span class="mute small">412 / 1430</span></div>
+        <div class="card-s" style="width:auto"><div class="cover c2" style="width:100%" data-t="عبد الظل"></div><b>عبد الظل</b><span class="mute small">+3 جديد</span></div>
+        <div class="card-s" style="width:auto"><div class="cover c5" style="width:100%" data-t="طريق الخالدين"></div><b>طريق الخالدين</b><span class="mute small">88 / 2100</span></div>
+        <div class="card-s" style="width:auto"><div class="cover c6" style="width:100%" data-t="ملك الظلال"></div><b>ملك الظلال</b><span class="mute small">مترجمة كلها</span></div>
+        <div class="card-s" style="width:auto"><div class="cover c3" style="width:100%" data-t="البداية بعد النهاية"></div><b>البداية بعد…</b><span class="mute small">201 / 480</span></div>
+        <div class="card-s" style="width:auto"><div class="cover c4" style="width:100%" data-t="القارئ العليم"></div><b>القارئ العليم</b><span class="mute small">مخلصة</span></div>
+      </div>
+    </div>
+    <nav class="nav"><a><span class="ms">home</span>الرئيسية</a><a><span class="ms">explore</span>اكتشف</a><a class="on"><span class="ms">auto_stories</span>المكتبة</a><a><span class="ms">headphones</span>استماع</a><a><span class="ms">more_horiz</span>المزيد</a></nav>
+  </div></div><figcaption>Library · light paper</figcaption></figure>
+  </div>
+</section>
+
+<div class="notes" dir="rtl">
+  <div class="note"><h3>ترجمة أسرع</h3><p>3 دفعات بتتترجم مع بعض، وكل فقرة بتظهر أول ما تخلص. الفصل الجاي بيتترجم في الخلفية لما تعدّي 60% من الحالي. كل فصل مترجم بيتحفظ، فلما تفتحه تاني بيفتح على طول.</p></div>
+  <div class="note"><h3>الاستماع</h3><p>البرنامج بيقرا لك الترجمة بصوت عربي، ولكل شخصية في الحوار صوت مختلف. بيكمّل والشاشة مقفولة، والتحكم من الإشعار، وبينقل للفصل الجاي لوحده.</p></div>
+  <div class="note"><h3>المصادر العربية</h3><p>الـ20 مصدر العربي من IReader، وزيادة عليهم 3 جداد: Free Kol Novel وAzora وOlaoe. الموقع اللي محتاج تحقق بيتفتح مرة في متصفح جوه البرنامج وانت اللي بتعدّيه بنفسك.</p></div>
+</div>
+
+<script>
+document.querySelectorAll('.wave').forEach(w=>{const h=[6,14,22,10,18,26,12,20,8,16,24,10,6,18,12];h.forEach(v=>{const i=document.createElement('i');i.style.height=v+'px';w.appendChild(i)})});
+</script>
