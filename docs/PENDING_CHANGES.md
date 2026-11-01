@@ -15,3 +15,7 @@ Build 2:
 - Broken sources switch off by themselves after the check (every 12 hours and from the Sources screen) and back on
   when they work; only the reader's languages are used, Arabic and English by default. A section lists the
   switched-off ones with the reason and "keep it on".
+
+Build 3:
+- FreeWebNovel (freewebnovel.com, IReader extension `ireader.freewebnovel.en`) is installed by itself once and pinned
+  on top of the sources, as the owner asked.

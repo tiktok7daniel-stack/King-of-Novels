@@ -96,6 +96,23 @@ class Extensions(
             }
             reload()
             refreshAvailable()
+            installFeatured()
+        }
+    }
+
+    /** Installs, once, the sources the owner asked for, and pins them on top. */
+    private suspend fun installFeatured() {
+        val done = settings.featuredDone.get()
+        val have = _installed.value.map { it.pkg }.toSet()
+        for (pkg in FEATURED - done) {
+            val ext = _available.value.firstOrNull { it.pkg == pkg }
+            if (pkg !in have) {
+                if (ext == null || !install(ext)) continue
+            }
+            _installed.value.firstOrNull { it.pkg == pkg }?.let { e ->
+                settings.pinnedSources.set(settings.pinnedSources.get() + e.source.id.toString())
+            }
+            settings.featuredDone.set(settings.featuredDone.get() + pkg)
         }
     }
 
@@ -333,6 +350,9 @@ class Extensions(
 
     companion object {
         const val IREADER_REPO = "https://raw.githubusercontent.com/IReaderorg/IReader-extensions/repov2"
+
+        /** Sources installed for everyone on first run: FreeWebNovel (freewebnovel.com), asked for by the owner. */
+        val FEATURED = setOf("ireader.freewebnovel.en")
         private const val TAG = "RiwayaExt"
         private const val FEATURE = "ireader"
         private const val META_CLASS = "source.class"

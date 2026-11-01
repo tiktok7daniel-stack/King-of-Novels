@@ -50,3 +50,9 @@ Turkish 3, Japanese 1, Portuguese 1, Ukrainian 1, Spanish 1, Multi 1. A custom r
 Grouped by language (preferred languages pinned on top), then by type: مترجم / مؤلف / آلي MTL / لايت نوفل.
 Each row shows the icon, the name, a language chip, a health dot (green / amber / red with the reason), the last-checked
 time, a pin and an enable switch.
+
+## D. Asked for by the owner
+
+| Name | Package | Site | How |
+|---|---|---|---|
+| FreeWebNovel | `ireader.freewebnovel.en` | https://freewebnovel.com | installed once by itself and pinned (`Extensions.FEATURED`) |

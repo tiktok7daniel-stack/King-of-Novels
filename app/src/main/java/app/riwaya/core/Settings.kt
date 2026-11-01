@@ -52,6 +52,8 @@ class Settings(context: Context) {
     val autoHideBroken = bool("auto_hide_broken", true)
     val lastHealthRun = str("last_health_run", "0")
     val englishAdded = bool("english_added", false)
+    /** Sources the owner asked for that were already installed once (so removing one keeps it removed). */
+    val featuredDone = set("featured_done", emptySet())
 
     // Translation
     val targetLanguage = str("target_language", "ar")

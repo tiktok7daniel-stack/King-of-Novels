@@ -47,6 +47,7 @@ object SourceCatalog {
         return when {
             "mtl" in n || "machine" in n -> SourceKind.MACHINE
             "royalroad" in n || "scribble" in n || "wattpad" in n -> SourceKind.ORIGINAL
+            "freewebnovel" in n -> SourceKind.TRANSLATED
             "light" in n || "ln" == n -> SourceKind.LIGHT_NOVEL
             else -> SourceKind.TRANSLATED
         }
