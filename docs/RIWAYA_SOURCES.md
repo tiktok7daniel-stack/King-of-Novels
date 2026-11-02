@@ -56,3 +56,4 @@ time, a pin and an enable switch.
 | Name | Package | Site | How |
 |---|---|---|---|
 | FreeWebNovel | `ireader.freewebnovel.en` | https://freewebnovel.com | installed once by itself and pinned (`Extensions.FEATURED`) |
+| Novel Nice | built in (`engine/builtin/Madara.kt`) | https://novelnice.com | Madara theme, as LNReader reads it; pinned once |

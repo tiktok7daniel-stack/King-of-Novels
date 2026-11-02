@@ -102,6 +102,11 @@ class Extensions(
 
     /** Installs, once, the sources the owner asked for, and pins them on top. */
     private suspend fun installFeatured() {
+        // Built-in sources the owner asked for: pinned once
+        if ("riwaya.novelnice" !in settings.featuredDone.get()) {
+            settings.pinnedSources.set(settings.pinnedSources.get() + NOVEL_NICE_ID.toString())
+            settings.featuredDone.set(settings.featuredDone.get() + "riwaya.novelnice")
+        }
         val done = settings.featuredDone.get()
         val have = _installed.value.map { it.pkg }.toSet()
         for (pkg in FEATURED - done) {
@@ -271,11 +276,14 @@ class Extensions(
 
     // ---- Loading (as IReader's catalog loader) ----
 
-    private fun builtIns(): List<NovelExt> = listOf(FreeKolNovel()).map { s ->
+    private fun builtIns(): List<NovelExt> = listOf(
+        FreeKolNovel() to "freekolnovel",
+        app.riwaya.engine.builtin.NovelNice() to "novelnice",
+    ).map { (s, short) ->
         NovelExt(
-            pkg = "riwaya.freekolnovel.ar",
+            pkg = "riwaya.$short.${s.lang}",
             name = s.name,
-            displayName = SourceCatalog.displayName("ireader.freekolnovel.ar", s.lang, s.name),
+            displayName = SourceCatalog.displayName("ireader.$short.${s.lang}", s.lang, s.name),
             versionCode = 1,
             versionName = "1.0",
             lang = s.lang,
@@ -353,6 +361,7 @@ class Extensions(
 
         /** Sources installed for everyone on first run: FreeWebNovel (freewebnovel.com), asked for by the owner. */
         val FEATURED = setOf("ireader.freewebnovel.en")
+        const val NOVEL_NICE_ID = 7_311_000_000_000_002L
         private const val TAG = "RiwayaExt"
         private const val FEATURE = "ireader"
         private const val META_CLASS = "source.class"

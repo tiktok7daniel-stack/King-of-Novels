@@ -33,3 +33,8 @@ Build 5:
 - Reader levels (9, from "قارئ مبتدئ" to "ملك الروايات") from all chapters read; on Home, and in full in More.
 - New-chapter notifications for the library, checked every 4 hours in the background (WorkManager); the
   notification opens the novel. Can be switched off in Settings.
+
+Build 7:
+- Novel Nice (novelnice.com) built in: a generic Madara source (`engine/builtin/Madara.kt`, as LNReader's Madara
+  plugin reads it: search page lists, novel page, `ajax/chapters/` with pages, admin-ajax fallback, chapter text),
+  pinned on top once.
